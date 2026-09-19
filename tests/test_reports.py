@@ -95,3 +95,35 @@ def test_spending_by_category_creates_report_file(tmp_path):
 
     finally:
         os.chdir(current_directory)
+
+
+def test_save_report_custom_filename(tmp_path):
+    transactions = pd.DataFrame(
+        [
+            {
+                "Дата операции": "15.12.2021 10:00:00",
+                "Категория": "Супермаркеты",
+                "Сумма платежа": -1000,
+            },
+        ]
+    )
+
+    current_directory = os.getcwd()
+
+    try:
+        os.chdir(tmp_path)
+
+        from src.reports import save_report
+
+        @save_report("custom_report.txt")
+        def test_report() -> pd.DataFrame:
+            return transactions
+
+        test_report()
+
+        report_file = tmp_path / "custom_report.txt"
+
+        assert report_file.exists()
+
+    finally:
+        os.chdir(current_directory)

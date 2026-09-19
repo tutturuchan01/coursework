@@ -353,33 +353,40 @@ def get_currency_rates(
     currencies: list[str],
 ) -> list[dict[str, Any]]:
     """
-    Получает актуальные курсы валют.
+    Получает актуальные курсы валют по отношению к рублю.
 
     :param currencies: список валют из настроек пользователя
     :return: список курсов валют
     """
 
-    response = requests.get(
-        "https://api.frankfurter.dev/v2/rates",
-        params={
-            "base": "RUB",
-            "quotes": ",".join(currencies),
-        },
-    )
+    rates = []
 
-    try:
-        response.raise_for_status()
-        rates = response.json()
-    except requests.RequestException:
-        return []
+    for currency in currencies:
+        try:
+            response = requests.get(
+                f"https://api.frankfurter.dev/v2/rate/{currency}/RUB",
+                timeout=10,
+            )
+            response.raise_for_status()
 
-    return [
-        {
-            "currency": rate["quote"],
-            "rate": float(rate["rate"]),
-        }
-        for rate in rates
-    ]
+            data = response.json()
+
+            rates.append(
+                {
+                    "currency": currency,
+                    "rate": round(float(data["rate"]), 2),
+                }
+            )
+
+        except (
+            requests.RequestException,
+            KeyError,
+            TypeError,
+            ValueError,
+        ):
+            continue
+
+    return rates
 
 
 def get_stock_prices(
